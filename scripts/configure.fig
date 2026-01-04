@@ -1,0 +1,108 @@
+#!/bin/bash
+# MIT License
+#
+# Copyright (c) 2025 James Hatfield
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+if ! ${FIG_DEFINED:-false} ; then
+    exec "$(dirname "$(readlink -f "${0}")")/fig.sh" ${0} ${@}
+fi
+
+fig_parser_begin "main"
+fig_parser_add_opt array "a,args" "Meson arguments to passthrough"
+fig_parser_add_opt flag "f,force" "Forcefully reconfigure (cleans build directory)"
+fig_parser_add_opt flag "link-clangd" "Setup .clangd file to point to this build directory for compilation database (compile_commands.json)"
+fig_parser_add_opt flag "clang20" "Setup clang-20 clang++-20 with cpp stdlib flags"
+fig_parser_add_opt flag "d,debug" "Debug mode"
+fig_parser_end
+
+setup()
+{
+    local MESON_ARGS=""
+    if "${OPT_main_force}" ; then
+        MESON_ARGS+=" --wipe "
+    fi
+    MESON_ARGS+=" ${OPT_main_args} "
+    if "${OPT_main_clang20}" ; then
+        MESON_ARGS+=" -Dcpp_args='-stdlib=libc++' -Dcpp_link_args='-stdlib=libc++' "
+    fi
+    if "${OPT_main_debug}" ; then
+        MESON_ARGS+=" -Dbuildtype=debug "
+    else
+        MESON_ARGS+=" -Dbuildtype=release -Db_ndebug=true -Dstrip=true -Doptimization=2 "
+    fi
+    (
+    if "${OPT_main_clang20}" ; then
+        export CC=clang-20
+        export CXX=clang++-20
+    fi
+    cd ${SRC_DIR}
+    meson setup ${BUILD_DIR}/meson ${MESON_ARGS}
+    )
+
+    echo """# GENERATED FILE (DO NOT EDIT)
+*
+""" > ${BUILD_DIR}/.gitignore
+}
+
+write_helper_scripts()
+{
+    local BUILD_SCRIPT="${BUILD_DIR}/build"
+
+    echo """#!/bin/bash
+BUILD_DIR=\"\$(cd -- \"\$(dirname -- \"\${BASH_SOURCE[0]}\")\" &> /dev/null && pwd)\"
+ninja -C \${BUILD_DIR}/meson \${@}
+""" > ${BUILD_SCRIPT}
+
+    chmod +x ${BUILD_SCRIPT}
+}
+
+link_clangd()
+{
+    if ${OPT_main_link_clangd} ; then
+        echo """CompileFlags:
+    CompilationDatabase: ${BUILD_DIR}/meson
+""" > ${SRC_DIR}/.clangd
+    fi
+}
+
+main()
+{
+    fig_assert meson
+    fig_assert ninja
+
+    parse_opts_main ${@}
+
+    if [ "${SRC_DIR}" == "${BUILD_DIR}" ] ; then
+        fig_log_err "in source tree builds not allowed!"
+        exit 1
+    fi
+
+    setup
+    write_helper_scripts
+    link_clangd
+}
+
+fig_export setup
+fig_export write_helper_scripts
+fig_export link_clangd
+
+fig_generate "../configure"
+

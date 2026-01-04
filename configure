@@ -1,0 +1,197 @@
+#!/bin/bash
+# THIS IS A GENERATED SCRIPT (DO NOT EDIT)!!
+# Source: ./scripts/configure.fig
+set -e
+
+SRC_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+SRC_DIR_RELATIVE="$(realpath --relative-to=$(pwd) "${SRC_DIR}")"
+BUILD_DIR="$(pwd)"
+
+fig_log ()
+{
+    echo "${1}"
+}
+
+fig_log_err ()
+{
+    echo "error: ${1}" 1>&2
+}
+
+fig_assert ()
+{
+    if ! which ${1} &> /dev/null; then
+        fig_log_err "command '${1}' is not available!";
+        return 1;
+    fi;
+    return 0
+}
+
+fig_assert_qq ()
+{
+    fig_assert "${@}" &> /dev/null
+}
+
+fig_assert_one_q ()
+{
+    fig_assert_one "${@}" > /dev/null
+}
+
+fig_assert_one_qq ()
+{
+    fig_assert_one "${@}" &> /dev/null
+}
+
+print_help_main ()
+{
+    echo """Usage:
+  ${0} [options]
+
+Options:
+  -h, --help
+    Print this help information
+  -a, --args <argument>
+    Meson arguments to passthrough
+  -f, --force
+    Forcefully reconfigure (cleans build directory)
+  --link-clangd
+    Setup .clangd file to point to this build directory for compilation
+    database (compile_commands.json)
+  --clang20
+    Setup clang-20 clang++-20 with cpp stdlib flags
+  -d, --debug
+    Debug mode"""
+}
+
+parse_opts_main ()
+{
+    local ERR=$(getopt -Q -o ha:fd --long help,args:,force,link-clangd,clang20,debug, -- "$@" 2>&1)
+    local ARGS=$(getopt -q -o ha:fd --long help,args:,force,link-clangd,clang20,debug, -- "$@")
+    eval set -- "${ARGS}"
+
+    if [ -n "${ERR}" ] ; then
+        fig_log_err "$(echo "${ERR}" | sed 's/getopt: //')"
+        print_help_main
+        return 1
+    fi
+
+    OPT_main_args_set=false
+    OPT_main_args=""
+    OPT_main_force_set=false
+    OPT_main_force=false
+    OPT_main_link_clangd_set=false
+    OPT_main_link_clangd=false
+    OPT_main_clang20_set=false
+    OPT_main_clang20=false
+    OPT_main_debug_set=false
+    OPT_main_debug=false
+
+    while true ; do
+        case "$1" in
+            -h|--help)
+                print_help_main
+                exit 0
+                ;;
+            -a|--args)
+                OPT_main_args_set=true
+                OPT_main_args+=" ${2} "
+                shift 2
+                ;;
+            -f|--force)
+                OPT_main_force_set=true
+                OPT_main_force=true
+                shift
+                ;;
+            --link-clangd)
+                OPT_main_link_clangd_set=true
+                OPT_main_link_clangd=true
+                shift
+                ;;
+            --clang20)
+                OPT_main_clang20_set=true
+                OPT_main_clang20=true
+                shift
+                ;;
+            -d|--debug)
+                OPT_main_debug_set=true
+                OPT_main_debug=true
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                fig_log_err "unknown argument!"
+                print_help_main
+                return 1
+                ;;
+        esac
+    done
+
+    if [ -n "${1}" ] ; then
+        fig_log_err "unhandled positional arguments!"
+        return 1
+    fi
+}
+
+setup ()
+{
+    local MESON_ARGS="";
+    if "${OPT_main_force}"; then
+        MESON_ARGS+=" --wipe ";
+    fi;
+    MESON_ARGS+=" ${OPT_main_args} ";
+    if "${OPT_main_clang20}"; then
+        MESON_ARGS+=" -Dcpp_args='-stdlib=libc++' -Dcpp_link_args='-stdlib=libc++' ";
+    fi;
+    if "${OPT_main_debug}"; then
+        MESON_ARGS+=" -Dbuildtype=debug ";
+    else
+        MESON_ARGS+=" -Dbuildtype=release -Db_ndebug=true -Dstrip=true -Doptimization=2 ";
+    fi;
+    ( if "${OPT_main_clang20}"; then
+        export CC=clang-20;
+        export CXX=clang++-20;
+    fi;
+    cd ${SRC_DIR};
+    meson setup ${BUILD_DIR}/meson ${MESON_ARGS} );
+    echo """# GENERATED FILE (DO NOT EDIT)
+*
+""" > ${BUILD_DIR}/.gitignore
+}
+
+write_helper_scripts ()
+{
+    local BUILD_SCRIPT="${BUILD_DIR}/build";
+    echo """#!/bin/bash
+BUILD_DIR=\"\$(cd -- \"\$(dirname -- \"\${BASH_SOURCE[0]}\")\" &> /dev/null && pwd)\"
+ninja -C \${BUILD_DIR}/meson \${@}
+""" > ${BUILD_SCRIPT};
+    chmod +x ${BUILD_SCRIPT}
+}
+
+link_clangd ()
+{
+    if ${OPT_main_link_clangd}; then
+        echo """CompileFlags:
+    CompilationDatabase: ${BUILD_DIR}/meson
+""" > ${SRC_DIR}/.clangd;
+    fi
+}
+
+main ()
+{
+    fig_assert meson;
+    fig_assert ninja;
+    parse_opts_main ${@};
+    if [ "${SRC_DIR}" == "${BUILD_DIR}" ]; then
+        fig_log_err "in source tree builds not allowed!";
+        exit 1;
+    fi;
+    setup;
+    write_helper_scripts;
+    link_clangd
+}
+
+main ${@}
+
