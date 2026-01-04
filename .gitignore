@@ -1,0 +1,6 @@
+.vscode
+.clangd
+compile_commands.json
+subprojects/*
+!subprojects/*.wrap
+!subprojects/packagefiles
