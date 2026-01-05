@@ -746,6 +746,26 @@ bool IMC_IMG_write_png(struct imc_image_lib_state *state, const char *filename)
     return true;
 }
 
+bool IMC_IMG_write_jpg(struct imc_image_lib_state *state, const char *filename)
+{
+    if (!state || !filename)
+    {
+        return false;
+    }
+
+    if (!img_init_check(state))
+    {
+        return false;
+    }
+
+    if (!plutovg_surface_write_to_jpg(state->surface, filename, 100))
+    {
+        return false;
+    }
+
+    return true;
+}
+
 void IMC_IMG_free(struct imc_image_lib_state *state)
 {
     if (!state)
