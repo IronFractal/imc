@@ -193,8 +193,6 @@ static int img_background(lua_State *L)
 {
     GET_IMG_STATE(L, ims);
     INIT_IMG_STATE(ims);
-    const int width = plutovg_surface_get_width(ims->surface);
-    const int height = plutovg_surface_get_height(ims->surface);
 
     plutovg_color_t color;
 
@@ -227,8 +225,7 @@ static int img_background(lua_State *L)
         plutovg_color_init_hsla(&color, h, s, l, a);
     }
 
-    plutovg_canvas_set_color(ims->canvas, &color);
-    plutovg_canvas_fill_rect(ims->canvas, 0, 0, width, height);
+    plutovg_surface_clear(ims->surface, &color);
 
     return 0;
 }
@@ -352,13 +349,40 @@ static int img_stroke_cap(lua_State *L)
 
     const char *list[] =
     {
-        "project",
-        "round",
-        "square",
+        [PLUTOVG_LINE_CAP_BUTT]     = "project",
+        [PLUTOVG_LINE_CAP_ROUND]    = "round",
+        [PLUTOVG_LINE_CAP_SQUARE]   = "square",
         nullptr,
     };
 
     ims->stroke_cap = luaL_checkoption(L, 1, "round", list);
+
+    return 0;
+}
+
+static int img_set_compositing_mode(lua_State *L)
+{
+    GET_IMG_STATE(L, ims);
+    INIT_IMG_STATE(ims);
+
+    const char *list[] =
+    {
+        [PLUTOVG_OPERATOR_CLEAR]    = "clear",
+        [PLUTOVG_OPERATOR_SRC]      = "src",
+        [PLUTOVG_OPERATOR_DST]      = "dst",
+        [PLUTOVG_OPERATOR_SRC_OVER] = "src_over",
+        [PLUTOVG_OPERATOR_DST_OVER] = "dst_over",
+        [PLUTOVG_OPERATOR_SRC_IN]   = "src_in",
+        [PLUTOVG_OPERATOR_DST_IN]   = "dst_in",
+        [PLUTOVG_OPERATOR_SRC_OUT]  = "src_out",
+        [PLUTOVG_OPERATOR_DST_OUT]  = "dst_out",
+        [PLUTOVG_OPERATOR_SRC_ATOP] = "src_atop",
+        [PLUTOVG_OPERATOR_DST_ATOP] = "dst_atop",
+        [PLUTOVG_OPERATOR_XOR]      = "xor",
+        nullptr,
+    };
+
+    plutovg_canvas_set_operator(ims->canvas, luaL_checkoption(L, 1, "src_over", list));
 
     return 0;
 }
@@ -686,6 +710,7 @@ struct imc_image_lib_state *IMC_IMG_load(lua_State *state)
     REGISTER_FN(no_stroke);
     REGISTER_FN(stroke_weight);
     REGISTER_FN(stroke_cap);
+    REGISTER_FN(set_compositing_mode);
     REGISTER_FN(circle);
     REGISTER_FN(ellipse);
     REGISTER_FN(line);
