@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include <stc/csview.h>
+
 #include "langvm.h"
 #include "arg_parse.h"
 
@@ -99,7 +101,13 @@ static bool parse_args(struct state *state, int argc, char **argv)
     {
         if (cstr_ends_with(&output_lower, FORMAT_LOOKUP[i].file_ext))
         {
-            state->format = FORMAT_LOOKUP[i].format;
+            const isize no_ext_size = cstr_size(&output_lower) - strlen(FORMAT_LOOKUP[i].file_ext);
+            csview no_ext = cstr_subview(&output_lower, 0, no_ext_size);
+
+            if (csview_ends_with(no_ext, "."))
+            {
+                state->format = FORMAT_LOOKUP[i].format;
+            }
         }
     }
 
