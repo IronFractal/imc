@@ -12,6 +12,7 @@ enum file_format
     FORMAT_JPG,
     FORMAT_BMP,
     FORMAT_TGA,
+    FORMAT_XPM,
 };
 
 struct state
@@ -46,6 +47,10 @@ struct lookup_entry
     {
         .file_ext = "tga",
         .format = FORMAT_TGA,
+    },
+    {
+        .file_ext = "xpm",
+        .format = FORMAT_XPM,
     },
 };
 
@@ -156,6 +161,9 @@ int main(int argc, char **argv)
             break;
         case FORMAT_TGA:
             IMC_VM_write_tga(vm, cstr_str(&state.output_file));
+            break;
+        case FORMAT_XPM:
+            IMC_VM_write_xpm(vm, cstr_str(&state.output_file));
             break;
         default:
     }

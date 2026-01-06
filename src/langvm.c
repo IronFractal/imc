@@ -99,6 +99,11 @@ inline bool IMC_VM_write_tga(struct imc_lang_vm *vm, const char *filename)
     return IMC_IMG_write_tga(vm->imgst, filename);
 }
 
+inline bool IMC_VM_write_xpm(struct imc_lang_vm *vm, const char *filename)
+{
+    return IMC_IMG_write_xpm(vm->imgst, filename);
+}
+
 void IMC_VM_free(struct imc_lang_vm *vm)
 {
     if (!vm)

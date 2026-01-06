@@ -54,6 +54,7 @@ imc_deps += [
 ]
 
 imc_srcs = files([
+    'src/xpm.c',
     'src/main.c',
     'src/langvm.c',
     'src/imagelib.c',

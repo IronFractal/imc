@@ -14,6 +14,8 @@ bool IMC_IMG_write_bmp(struct imc_image_lib_state *state, const char *filename);
 
 bool IMC_IMG_write_tga(struct imc_image_lib_state *state, const char *filename);
 
+bool IMC_IMG_write_xpm(struct imc_image_lib_state *state, const char *filename);
+
 void IMC_IMG_free(struct imc_image_lib_state *state);
 
 #endif
