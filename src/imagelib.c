@@ -4,6 +4,7 @@
 
 #include <lauxlib.h>
 #include <plutovg.h>
+#include <stb_image_write.h>
 
 #define SET_LUA_ERR(MSG) \
 luaL_error(L, MSG); \
@@ -762,6 +763,68 @@ bool IMC_IMG_write_jpg(struct imc_image_lib_state *state, const char *filename)
     {
         return false;
     }
+
+    return true;
+}
+
+bool IMC_IMG_write_bmp(struct imc_image_lib_state *state, const char *filename)
+{
+    int width;
+    int height;
+    int stride;
+    unsigned char *data;
+
+    if (!state || !filename)
+    {
+        return false;
+    }
+
+    if (!img_init_check(state))
+    {
+        return false;
+    }
+
+    width = plutovg_surface_get_width(state->surface);
+    height = plutovg_surface_get_height(state->surface);
+    stride = plutovg_surface_get_stride(state->surface);
+    data = plutovg_surface_get_data(state->surface);
+
+    plutovg_convert_argb_to_rgba(data, data, width, height, stride);
+
+    stbi_write_bmp(filename, width, height, 4, data);
+
+    plutovg_convert_rgba_to_argb(data, data, width, height, stride);
+
+    return true;
+}
+
+bool IMC_IMG_write_tga(struct imc_image_lib_state *state, const char *filename)
+{
+    int width;
+    int height;
+    int stride;
+    unsigned char *data;
+
+    if (!state || !filename)
+    {
+        return false;
+    }
+
+    if (!img_init_check(state))
+    {
+        return false;
+    }
+
+    width = plutovg_surface_get_width(state->surface);
+    height = plutovg_surface_get_height(state->surface);
+    stride = plutovg_surface_get_stride(state->surface);
+    data = plutovg_surface_get_data(state->surface);
+
+    plutovg_convert_argb_to_rgba(data, data, width, height, stride);
+
+    stbi_write_tga(filename, width, height, 4, data);
+
+    plutovg_convert_rgba_to_argb(data, data, width, height, stride);
 
     return true;
 }

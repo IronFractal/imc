@@ -14,6 +14,10 @@ project(
 
 imc_deps = []
 
+stb_dep = subproject(
+    'stb',
+).get_variable('stb_dep')
+
 stc_dep = subproject(
     'stc',
     default_options: [
@@ -43,6 +47,7 @@ plutovg_dep = subproject(
 ).get_variable('plutovg_dep')
 
 imc_deps += [
+    stb_dep,
     stc_dep,
     luajit_dep,
     plutovg_dep,
@@ -53,6 +58,7 @@ imc_srcs = files([
     'src/langvm.c',
     'src/imagelib.c',
     'src/arg_parse.c',
+    'src/stb_image_write_impl.c',
 ])
 
 executable(

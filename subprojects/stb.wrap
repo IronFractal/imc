@@ -1,0 +1,10 @@
+[wrap-file]
+directory = stb-f1c79c02822848a9bed4315b12c8c8f3761e1296
+
+source_url = https://github.com/nothings/stb/archive/f1c79c02822848a9bed4315b12c8c8f3761e1296.tar.gz
+source_filename = stb-f1c79c02822848a9bed4315b12c8c8f3761e1296.tar.gz
+source_hash = a39b0f2d96d9b64171ac1fd73295b7c5866f904e653b379da886d050a6900db9
+patch_directory = stb
+
+[provide]
+dependency_names = stb_dep

@@ -12,6 +12,10 @@ bool IMC_VM_write_png(struct imc_lang_vm *vm, const char *filename);
 
 bool IMC_VM_write_jpg(struct imc_lang_vm *vm, const char *filename);
 
+bool IMC_VM_write_bmp(struct imc_lang_vm *vm, const char *filename);
+
+bool IMC_VM_write_tga(struct imc_lang_vm *vm, const char *filename);
+
 void IMC_VM_free(struct imc_lang_vm *vm);
 
 #endif

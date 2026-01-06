@@ -8,6 +8,8 @@ enum file_format
     FORMAT_UNKNOWN,
     FORMAT_PNG,
     FORMAT_JPG,
+    FORMAT_BMP,
+    FORMAT_TGA,
 };
 
 struct state
@@ -24,16 +26,24 @@ struct lookup_entry
 } static const FORMAT_LOOKUP[] =
 {
     {
-        .file_ext = ".png",
+        .file_ext = "png",
         .format = FORMAT_PNG,
     },
     {
-        .file_ext = ".jpg",
+        .file_ext = "jpg",
         .format = FORMAT_JPG,
     },
     {
-        .file_ext = ".jpeg",
+        .file_ext = "jpeg",
         .format = FORMAT_JPG,
+    },
+    {
+        .file_ext = "bmp",
+        .format = FORMAT_BMP,
+    },
+    {
+        .file_ext = "tga",
+        .format = FORMAT_TGA,
     },
 };
 
@@ -118,6 +128,11 @@ int main(int argc, char **argv)
 
     vm = IMC_VM_new();
 
+    if (!vm)
+    {
+        return EXIT_FAILURE;
+    }
+
     IMC_VM_run_src_file(vm, cstr_str(&state.input_file));
 
     switch (state.format)
@@ -128,9 +143,15 @@ int main(int argc, char **argv)
         case FORMAT_JPG:
             IMC_VM_write_jpg(vm, cstr_str(&state.output_file));
             break;
+        case FORMAT_BMP:
+            IMC_VM_write_bmp(vm, cstr_str(&state.output_file));
+            break;
+        case FORMAT_TGA:
+            IMC_VM_write_tga(vm, cstr_str(&state.output_file));
+            break;
         default:
     }
 
     IMC_VM_free(vm);
-    return 0;
+    return EXIT_SUCCESS;
 }
