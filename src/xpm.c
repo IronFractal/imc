@@ -1,7 +1,11 @@
 #include "xpm.h"
 
+#include <ctype.h>
 #include <stdio.h>
+#include <libgen.h>
 #include <stdint.h>
+
+#include <stc/cstr.h>
 
 const char VALID_KEY_CHARS[] = "!#$%&'()*+,-./0123456789:;<=>?@"
                                "ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`"
@@ -32,6 +36,24 @@ struct color_palette
 
 #define CONSTRAIN_COLOR(col) do { if (col.a == 0) { cur.full = 0; } else { col.a = 255; } } while (false)
 
+void filter_c_iden(cstr *s)
+{
+    for (isize i = 0; i < cstr_size(s); i++)
+    {
+        const unsigned char ch = cstr_str(s)[i];
+
+        if (!(isalnum(ch)))
+        {
+            cstr_replace_at(s, i, 1, "_");
+        }
+    }
+
+    if (isdigit(cstr_str(s)[0]))
+    {
+        cstr_insert(s, 0, "_");
+    }
+}
+
 bool palettize(struct color_palette *pal, int width, int height, const void *data)
 {
     for (int y = 0; y < height; y++)
@@ -59,6 +81,7 @@ bool palettize(struct color_palette *pal, int width, int height, const void *dat
 
             if (!found && pal->size >= (VALID_KEY_CHARS_LEN * 2))
             {
+                printf("error: exceeded max color count!!\n");
                 return false;
             }
             else if (!found)
@@ -74,12 +97,23 @@ bool palettize(struct color_palette *pal, int width, int height, const void *dat
 
 bool IMC_write_xpm(const char *filename, int width, int height, const void *data)
 {
+    bool result = true;
     bool doublekey = false;
+    char *image_name = strdup(filename);
+    cstr image_name_str = cstr_init();
+    isize image_name_ext_begin = -1;
     struct color_palette palette = {};
     FILE *out = fopen(filename, "w");
 
     if (!out)
     {
+        printf("error: failed to open file (%m)!!\n");
+        goto handle_failure;
+    }
+
+    if (!image_name)
+    {
+        printf("error: failed to create xpm image name!!\n");
         goto handle_failure;
     }
 
@@ -93,23 +127,38 @@ bool IMC_write_xpm(const char *filename, int width, int height, const void *data
         doublekey = true;
     }
 
+    image_name_str = cstr_from(basename(image_name));
+
+    image_name_ext_begin = cstr_find(&image_name_str, ".");
+
+    if (image_name_ext_begin > 0)
+    {
+        cstr_resize(&image_name_str, image_name_ext_begin, ' ');
+    }
+
+    filter_c_iden(&image_name_str);
+
     if (!fprintf(out, "/* XPM */\n"))
     {
+        printf("error: failed to write (%m)!!\n");
         goto handle_failure;
     }
 
-    if (!fprintf(out, "static char *test[] = {\n"))
+    if (!fprintf(out, "static char *%s[] = {\n", cstr_str(&image_name_str)))
     {
+        printf("error: failed to write (%m)!!\n");
         goto handle_failure;
     }
 
     if (!fprintf(out, "    \"%d %d %lu 1\",\n", width, height, palette.size + (palette.define_none ? 1 : 0)))
     {
+        printf("error: failed to write (%m)!!\n");
         goto handle_failure;
     }
 
     if (palette.define_none && !fprintf(out, "%s    \"  c None\",\n", doublekey ? " " : ""))
     {
+        printf("error: failed to write (%m)!!\n");
         goto handle_failure;
     }
 
@@ -121,11 +170,13 @@ bool IMC_write_xpm(const char *filename, int width, int height, const void *data
 
         if (doublekey && !fprintf(out, "    \"%c%c c #%02X%02X%02X\",\n", k1, k2, cur->r, cur->g, cur->b))
         {
+            printf("error: failed to write (%m)!!\n");
             goto handle_failure;
         }
 
         if (!doublekey && !fprintf(out, "    \"%c c #%02X%02X%02X\",\n", k2, cur->r, cur->g, cur->b))
         {
+            printf("error: failed to write (%m)!!\n");
             goto handle_failure;
         }
     }
@@ -134,6 +185,7 @@ bool IMC_write_xpm(const char *filename, int width, int height, const void *data
     {
         if (!fprintf(out, "    \""))
         {
+            printf("error: failed to write (%m)!!\n");
             goto handle_failure;
         }
 
@@ -159,10 +211,12 @@ bool IMC_write_xpm(const char *filename, int width, int height, const void *data
 
                 if (!cur.full && !fprintf(out, "  "))
                 {
+                    printf("error: failed to write (%m)!!\n");
                     goto handle_failure;
                 }
                 else if (cur.full && !fprintf(out, "%c%c", k1, k2))
                 {
+                    printf("error: failed to write (%m)!!\n");
                     goto handle_failure;
                 }
             }
@@ -172,10 +226,12 @@ bool IMC_write_xpm(const char *filename, int width, int height, const void *data
 
                 if (!cur.full && !fprintf(out, " "))
                 {
+                    printf("error: failed to write (%m)!!\n");
                     goto handle_failure;
                 }
                 else if (cur.full && !fprintf(out, "%c", k))
                 {
+                    printf("error: failed to write (%m)!!\n");
                     goto handle_failure;
                 }
             }
@@ -183,18 +239,23 @@ bool IMC_write_xpm(const char *filename, int width, int height, const void *data
 
         if (!fprintf(out, "\",\n"))
         {
+            printf("error: failed to write (%m)!!\n");
             goto handle_failure;
         }
     }
 
     if (!fprintf(out, "};\n"))
     {
+        printf("error: failed to write (%m)!!\n");
         goto handle_failure;
     }
 
+out:
     fclose(out);
-    return true;
+    free(image_name);
+    cstr_drop(&image_name_str);
+    return result;
 handle_failure:
-    fclose(out);
-    return false;
+    result = false;
+    goto out;
 }
