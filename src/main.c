@@ -168,6 +168,9 @@ int main(int argc, char **argv)
         default:
     }
 
+    cstr_drop(&state.input_file);
+    cstr_drop(&state.output_file);
+
     IMC_VM_free(vm);
     return EXIT_SUCCESS;
 }
