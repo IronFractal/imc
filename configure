@@ -59,13 +59,15 @@ Options:
   --clang20
     Setup clang-20 clang++-20 with cpp stdlib flags
   -d, --debug
-    Debug mode"""
+    Debug mode
+  --enable-asan
+    Enable asan"""
 }
 
 parse_opts_main ()
 {
-    local ERR=$(getopt -Q -o ha:fd --long help,args:,force,link-clangd,clang20,debug, -- "$@" 2>&1)
-    local ARGS=$(getopt -q -o ha:fd --long help,args:,force,link-clangd,clang20,debug, -- "$@")
+    local ERR=$(getopt -Q -o ha:fd --long help,args:,force,link-clangd,clang20,debug,enable-asan, -- "$@" 2>&1)
+    local ARGS=$(getopt -q -o ha:fd --long help,args:,force,link-clangd,clang20,debug,enable-asan, -- "$@")
     eval set -- "${ARGS}"
 
     if [ -n "${ERR}" ] ; then
@@ -84,6 +86,8 @@ parse_opts_main ()
     OPT_main_clang20=false
     OPT_main_debug_set=false
     OPT_main_debug=false
+    OPT_main_enable_asan_set=false
+    OPT_main_enable_asan=false
 
     while true ; do
         case "$1" in
@@ -114,6 +118,11 @@ parse_opts_main ()
             -d|--debug)
                 OPT_main_debug_set=true
                 OPT_main_debug=true
+                shift
+                ;;
+            --enable-asan)
+                OPT_main_enable_asan_set=true
+                OPT_main_enable_asan=true
                 shift
                 ;;
             --)
@@ -148,6 +157,9 @@ setup ()
         MESON_ARGS+=" -Dbuildtype=debug ";
     else
         MESON_ARGS+=" -Dbuildtype=release -Db_ndebug=true -Dstrip=true -Doptimization=2 ";
+    fi;
+    if "${OPT_main_enable_asan}"; then
+        MESON_ARGS+=" -Denable_asan=true ";
     fi;
     ( if "${OPT_main_clang20}"; then
         export CC=clang-20;

@@ -31,6 +31,7 @@ fig_parser_add_opt flag "f,force" "Forcefully reconfigure (cleans build director
 fig_parser_add_opt flag "link-clangd" "Setup .clangd file to point to this build directory for compilation database (compile_commands.json)"
 fig_parser_add_opt flag "clang20" "Setup clang-20 clang++-20 with cpp stdlib flags"
 fig_parser_add_opt flag "d,debug" "Debug mode"
+fig_parser_add_opt flag "enable-asan" "Enable asan"
 fig_parser_end
 
 setup()
@@ -47,6 +48,9 @@ setup()
         MESON_ARGS+=" -Dbuildtype=debug "
     else
         MESON_ARGS+=" -Dbuildtype=release -Db_ndebug=true -Dstrip=true -Doptimization=2 "
+    fi
+    if "${OPT_main_enable_asan}" ; then
+        MESON_ARGS+=" -Denable_asan=true "
     fi
     (
     if "${OPT_main_clang20}" ; then

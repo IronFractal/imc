@@ -1,0 +1,1 @@
+option('enable_asan', type: 'boolean', value: false)

@@ -10,8 +10,10 @@ project(
         'c_std=gnu23',
         'warning_level=3',
     ],
+    meson_version: '>=1.1.0',
 )
 
+imc_opts = []
 imc_deps = []
 
 stb_dep = subproject(
@@ -53,6 +55,10 @@ imc_deps += [
     plutovg_dep,
 ]
 
+if get_option('enable_asan')
+    imc_opts += ['b_sanitize=address']
+endif
+
 imc_srcs = files([
     'src/xpm.c',
     'src/main.c',
@@ -66,5 +72,6 @@ executable(
     meson.project_name(),
     imc_srcs,
     dependencies: imc_deps,
+    override_options: imc_opts,
     include_directories: include_directories('include'),
 )
